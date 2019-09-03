@@ -1,0 +1,8 @@
+add
+addin
+testqs[0-9]
+testaccess
+testinsert[0-9]
+qs
+qs.cmi
+qs.cmo
