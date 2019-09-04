@@ -81,13 +81,13 @@ qs_info parse_arguments(int argc, char** argv) {
             || strcmp(argv[i], "-d") == 0
             || strcmp(argv[i], "-m") == 0) {
             initialize_type = argv[i][1];
-        } else if (strcmp(argv[i], "-n") == 0) {
+        } else if (strcmp(argv[i], "-d") == 0) {
             qsi.execute = false;
         } else if (strisnumber(argv[i])) {
             qsi.size = strtol(argv[i], NULL, 0);
             assert(qsi.size > 0);
         } else {
-            fprintf(stderr, "Usage: %s [-r|-u|-d|-m] [-n] [SIZE]\n", argv[0]);
+            fprintf(stderr, "Usage: %s [-r|-u|-d|-m] [-d] [SIZE]\n", argv[0]);
             exit(1);
         }
     }

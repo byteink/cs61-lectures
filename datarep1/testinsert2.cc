@@ -10,8 +10,8 @@ int main(int argc, char* argv[]) {
         int value = qsi.array[i];
 
         // find insertion position
-        auto pos = std::find_if_not(list.begin(), list.end(),
-                                    [=] (int x) { return x < value; });
+        auto pos = std::lower_bound(list.begin(), list.end(), value,
+                                    [] (int x, int value) { return x < value; });
 
         // insert value there
         list.insert(pos, value);

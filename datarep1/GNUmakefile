@@ -1,22 +1,42 @@
-PROGRAMS = testqs0 testqs1 testqs2 testqs3 testqs4 testqs5 testqs6 \
-	testaccess testinsert0 testinsert1 \
+PROGRAMS = testaccess testinsert0 testinsert1 testinsert2 \
 	add addin
 all: $(PROGRAMS)
 
-ALLPROGRAMS = $(PROGRAMS)
+TESTQSPROGRAMS = testqs0 testqs1 testqs2 testqs3 testqs4 testqs5 testqs6
+ALLPROGRAMS = $(PROGRAMS) $(TESTQSPROGRAMS)
 
 include ../common/rules.mk
 
 %.o: %.cc $(BUILDSTAMP)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
 
+testaccess: testaccess.o qslib.o allowexec.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+testinsert0: testinsert0.o qslib.o allowexec.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+testinsert1: testinsert1.o qslib.o allowexec.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+testinsert2: testinsert1.o qslib.o allowexec.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+add: add.o addf.o hexdump.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+addin: addin.o hexdump.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+
+addf.o: addf.c $(BUILDSTAMP)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEPCFLAGS) $(O) -fomit-frame-pointer -o $@ -c $<
+
+testqs: $(TESTQSPROGRAMS)
+
 testqs0: testqs0.o qslib.o allowexec.o hexdump.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 testqs1: testqs1.o qslib.o allowexec.o hexdump.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-testqs1b: testqs1b.o qslib.o allowexec.o hexdump.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 testqs2: testqs2.o qslib.o allowexec.o hexdump.o
@@ -34,23 +54,6 @@ testqs5: testqs5.o qslib.o allowexec.o hexdump.o
 testqs6: testqs6.o qslib.o allowexec.o hexdump.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
-testaccess: testaccess.o qslib.o allowexec.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-testinsert0: testinsert0.o qslib.o allowexec.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-testinsert1: testinsert1.o qslib.o allowexec.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-add: add.o addf.o hexdump.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-addin: addin.o hexdump.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-addf.o: addf.cc $(BUILDSTAMP)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -fomit-frame-pointer -o $@ -c $<
 
 
 clean:

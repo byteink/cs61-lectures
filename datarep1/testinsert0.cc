@@ -9,9 +9,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i != qsi.size; ++i) {
         int value = qsi.array[i];
 
-        // find first position in list that's > value
-        auto pos = std::find_if(list.begin(), list.end(),
-                                [=] (int x) { return x > value; });
+        // find insertion position
+        auto pos = std::find_if_not(list.begin(), list.end(),
+                                    [=] (int x) { return x < value; });
 
         // insert value there
         list.insert(pos, value);

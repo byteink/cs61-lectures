@@ -19,6 +19,7 @@
 .deps
 .gitcheckout
 .goutputstream-*
+.hg
 .project
 .svn
 .vscode
