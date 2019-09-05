@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     // & without SANITIZE=1.
     if (strcmp(argv[1], "access1") == 0) {
         printf("access1(%d) = %d\n", x, access1(x));
-    } else if (strcmp(argv[1], "uncheckedaccess") == 0) {
+    } else if (strcmp(argv[1], "access2") == 0) {
         printf("access2(%d) = %d\n", x, access2(x));
     } else if (strcmp(argv[1], "inc") == 0) {
         printf("%d + 1 = %d\n", x, x + 1);
