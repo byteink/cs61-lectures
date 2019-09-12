@@ -1,12 +1,13 @@
-BASEPROGRAMS = mexplore0 mexplore1 mexplore2 mexplore3 mexplore4 \
-	msurprise
+BASEPROGRAMS = mexplore0 mexplore1 mexplore2 mexplore3 mexplore4
 BASEPROGRAMS_OPT = $(patsubst %,%.opt,$(BASEPROGRAMS))
 BASEPROGRAMS_NOOPT = $(patsubst %,%.noopt,$(BASEPROGRAMS))
 PROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_OPT)
 all: $(PROGRAMS)
 
 ALLPROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_OPT) \
-	$(BASEPROGRAMS_NOOPT) mexplore mexplore.opt mexplore.noopt
+	$(BASEPROGRAMS_NOOPT) \
+	mexplore mexplore.opt mexplore.noopt \
+	msurprise msurprise.opt msurprise.noopt
 
 PIE ?= 0
 O ?= 0
