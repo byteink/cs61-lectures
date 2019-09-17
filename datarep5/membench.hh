@@ -1,9 +1,9 @@
-#ifndef CS61_MEMBENCH_H
-#define CS61_MEMBENCH_H
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef CS61_MEMBENCH_HH
+#define CS61_MEMBENCH_HH
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 
 unsigned long memnode_benchmark(unsigned noperations, unsigned step);
 

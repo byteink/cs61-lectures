@@ -9,30 +9,41 @@ struct memnode {
 
 
 struct memnode_arena {
-    std::vector<memnode*> allocated;
-    std::vector<memnode*> free_list;
+    union freeable_memnode {
+        memnode n;
+        freeable_memnode* next_free;
+    };
+
+    std::vector<freeable_memnode*> allocated;
+    freeable_memnode* free_list;
+
+    memnode_arena()
+        : free_list(nullptr) {
+    }
 
     ~memnode_arena() {
-        while (!allocated.empty()) {
-            delete allocated.back();
-            allocated.pop_back();
+        while (freeable_memnode* n = free_list) {
+            free_list = n->next_free;
+            delete n;
         }
     }
 
     memnode* allocate() {
-        memnode* n;
-        if (free_list.empty()) {
-            n = new memnode;
-            allocated.push_back(n);
+        freeable_memnode* fn;
+        if (!free_list) {
+            fn = new freeable_memnode;
+            allocated.push_back(fn);
         } else {
-            n = free_list.back();
-            free_list.pop_back();
+            fn = free_list;
+            free_list = fn->next_free;
         }
-        return n;
+        return &fn->n;
     }
 
     void deallocate(memnode* n) {
-        free_list.push_back(n);
+        freeable_memnode* fn = (freeable_memnode*) n;
+        fn->next_free = free_list;
+        free_list = fn;
     }
 };
 
@@ -67,6 +78,7 @@ unsigned long memnode_benchmark(unsigned noperations, unsigned step) {
     unsigned long result = 0;
     for (unsigned i = 0; i != nnodes; ++i) {
         result += m[i]->line;
+        arena.deallocate(m[i]);
     }
 
     return result;

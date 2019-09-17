@@ -9,14 +9,18 @@ struct memnode {
 
 
 struct memnode_arena {
-    std::vector<memnode*> allocated;
     std::vector<memnode*> free_list;
+
+    ~memnode_arena() {
+        for (auto n : free_list) {
+            delete n;
+        }
+    }
 
     memnode* allocate() {
         memnode* n;
         if (free_list.empty()) {
             n = new memnode;
-            allocated.push_back(n);
         } else {
             n = free_list.back();
             free_list.pop_back();
@@ -60,6 +64,7 @@ unsigned long memnode_benchmark(unsigned noperations, unsigned step) {
     unsigned long result = 0;
     for (unsigned i = 0; i != nnodes; ++i) {
         result += m[i]->line;
+        arena.deallocate(m[i]);
     }
 
     return result;

@@ -58,6 +58,7 @@ unsigned long memnode_benchmark(unsigned noperations, unsigned step) {
     unsigned long result = 0;
     for (unsigned i = 0; i != nnodes; ++i) {
         result += m[i]->line;
+        arena.deallocate(m[i]);
     }
 
     return result;

@@ -14,7 +14,8 @@ MEMBENCH_PROGRAMS += $(patsubst mb-%.cc,mb-%,$(sort $(wildcard mb-*.cc)))
 PROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_NOOPT) $(MEMBENCH_PROGRAMS)
 all: $(PROGRAMS)
 
-ALLPROGRAMS = $(PROGRAMS) mexplore4 mexplore4.noopt
+ALLPROGRAMS = $(PROGRAMS) mexplore4 mexplore4.noopt \
+	mb-arena-05
 
 PIE ?= 0
 O ?= 3

@@ -18,7 +18,7 @@ void* operator new(size_t sz) {
     if (blocks.size() == 100000) {
         gc();
     }
-    
+
     void* p = malloc(sz);
     if (!p) {
         gc();

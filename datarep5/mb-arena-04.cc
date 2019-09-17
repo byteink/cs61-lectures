@@ -14,7 +14,7 @@ struct memnode_arena {
         freeable_memnode* next_free;
     };
 
-    std::vector<freeable_memnode*> allocated;
+    std::vector<freeable_memnode*> allocated_groups;
     freeable_memnode* free_list;
 
     memnode_arena()
@@ -22,21 +22,28 @@ struct memnode_arena {
     }
 
     ~memnode_arena() {
-        while (!allocated.empty()) {
-            delete allocated.back();
-            allocated.pop_back();
+        for (auto g : allocated_groups) {
+            delete[] g;
         }
     }
 
-    memnode* allocate() {
-        freeable_memnode* fn;
-        if (!free_list) {
-            fn = new freeable_memnode;
-            allocated.push_back(fn);
-        } else {
-            fn = free_list;
-            free_list = fn->next_free;
+private:
+    void refresh_free_list() {
+        freeable_memnode* g = new freeable_memnode[2048];
+        for (unsigned i = 0; i != 2048; ++i) {
+            g[i].next_free = free_list;
+            free_list = &g[i];
         }
+        allocated_groups.push_back(g);
+    }
+
+public:
+    memnode* allocate() {
+        if (!free_list) {
+            refresh_free_list();
+        }
+        freeable_memnode* fn = free_list;
+        free_list = fn->next_free;
         return &fn->n;
     }
 
@@ -78,6 +85,7 @@ unsigned long memnode_benchmark(unsigned noperations, unsigned step) {
     unsigned long result = 0;
     for (unsigned i = 0; i != nnodes; ++i) {
         result += m[i]->line;
+        arena.deallocate(m[i]);
     }
 
     return result;
