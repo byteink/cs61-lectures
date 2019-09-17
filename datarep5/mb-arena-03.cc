@@ -14,7 +14,6 @@ struct memnode_arena {
         freeable_memnode* next_free;
     };
 
-    std::vector<freeable_memnode*> allocated;
     freeable_memnode* free_list;
 
     memnode_arena()
@@ -22,9 +21,9 @@ struct memnode_arena {
     }
 
     ~memnode_arena() {
-        while (freeable_memnode* n = free_list) {
-            free_list = n->next_free;
-            delete n;
+        while (freeable_memnode* fn = free_list) {
+            free_list = fn->next_free;
+            delete fn;
         }
     }
 
@@ -32,7 +31,6 @@ struct memnode_arena {
         freeable_memnode* fn;
         if (!free_list) {
             fn = new freeable_memnode;
-            allocated.push_back(fn);
         } else {
             fn = free_list;
             free_list = fn->next_free;

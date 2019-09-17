@@ -14,8 +14,8 @@ struct memnode_arena {
         freeable_memnode* next_free;
     };
 
-    std::vector<freeable_memnode*> allocated_groups;
     freeable_memnode* free_list;
+    std::vector<freeable_memnode*> allocated_groups;
 
     memnode_arena()
         : free_list(nullptr) {
@@ -28,7 +28,7 @@ struct memnode_arena {
     }
 
 private:
-    void refresh_free_list() {
+    void __attribute__((noinline)) refresh_free_list() {
         freeable_memnode* g = new freeable_memnode[2048];
         for (unsigned i = 0; i != 2048; ++i) {
             g[i].next_free = free_list;
