@@ -7,9 +7,9 @@ mb-tcmalloc
 mb-malloc-[0-9][0-9]
 mb-arena-[0-9][0-9]
 mb-gc-[0-9][0-9]
-mexplore4
-mexplore4.opt
-mexplore4.noopt
+mexplore[0-9]
+mexplore[0-9].opt
+mexplore[0-9].noopt
 msurprise
 msurprise.opt
 msurprise.noopt

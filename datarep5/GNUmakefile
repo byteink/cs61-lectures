@@ -1,4 +1,5 @@
-BASEPROGRAMS = mexplore4 mexplore5 ubpointer
+BASEPROGRAMS = msurprise ubsignedinc ubsignedloop \
+	ubsignedloopx ubunsignedloop
 BASEPROGRAMS_NOOPT = $(patsubst %,%.noopt,$(BASEPROGRAMS))
 
 MEMBENCH_PROGRAMS = mb-malloc
@@ -13,7 +14,7 @@ MEMBENCH_PROGRAMS += $(patsubst mb-%.cc,mb-%,$(sort $(wildcard mb-*.cc)))
 PROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_NOOPT) $(MEMBENCH_PROGRAMS)
 all: $(PROGRAMS)
 
-ALLPROGRAMS = $(PROGRAMS) msurprise msurprise.noopt
+ALLPROGRAMS = $(PROGRAMS) mexplore4 mexplore4.noopt
 
 PIE ?= 0
 O ?= 3
