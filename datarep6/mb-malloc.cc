@@ -2,41 +2,8 @@
 #include <vector>
 #include <string>
 
-struct allocation {
-    uintptr_t addr;
-    size_t sz;
-};
-
-static std::vector<allocation, system_allocator<allocation>> blocks;
-void gc();
-
-
-void* operator new(size_t sz) {
-    blocks.reserve(10000);
-
-    void* p = malloc(sz);
-    if (!p) {
-        gc();
-        p = malloc(sz);
-    }
-    if (p) {
-        blocks.push_back(allocation{(uintptr_t) p, sz});
-    }
-    return p;
-}
-
-void operator delete(void*) noexcept {
-}
-
-void gc() {
-    abort();
-}
-
-COMPLETE_ALLOCATION_OPERATORS;
-
-
 struct memnode {
-    const char* file;
+    std::string file;
     unsigned line;
 };
 

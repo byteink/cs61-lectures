@@ -1,4 +1,5 @@
-BASEPROGRAMS =
+BASEPROGRAMS = msurprise ubsignedinc ubsignedloop \
+	ubsignedloopx ubunsignedloop
 BASEPROGRAMS_NOOPT = $(patsubst %,%.noopt,$(BASEPROGRAMS))
 
 MEMBENCH_PROGRAMS = mb-malloc
@@ -10,17 +11,18 @@ MEMBENCH_PROGRAMS += mb-tcmalloc
 endif
 MEMBENCH_PROGRAMS += $(patsubst mb-%.cc,mb-%,$(sort $(wildcard mb-*.cc)))
 
-PROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_NOOPT) $(MEMBENCH_PROGRAMS)
+PROGRAMS = $(BASEPROGRAMS) $(BASEPROGRAMS_NOOPT) $(MEMBENCH_PROGRAMS) \
+	attackme attackme.unsafe
 all: $(PROGRAMS)
 
-OLDPROGRAMS = mexplore4 mb-arena-05 mb-gc-01 mb-gc-02 \
-	msurprise ubsignedinc ubsignedloop ubsignedloopx ubunsignedloop
-ALLPROGRAMS = $(PROGRAMS) $(OLDPROGRAMS) $(patsubst %,%.noopt,$(OLDPROGRAMS))
+ALLPROGRAMS = $(PROGRAMS)
 
 PIE ?= 0
 O ?= 3
 COMPILER ?= clang
 include ../common/rules.mk
+
+UNSAFEFLAGS := -U_FORTIFY_SOURCE -fno-stack-protector $(if $(ISLINUX),-no-pie,)
 
 %.o: %.cc $(BUILDSTAMP)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -o $@ -c $<
@@ -31,6 +33,7 @@ include ../common/rules.mk
 %.noopt.o: %.cc $(BUILDSTAMP)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -O0 $(DEPCFLAGS) -o $@ -c $<
 
+
 $(BASEPROGRAMS): %: %.o hexdump.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
@@ -39,6 +42,19 @@ $(patsubst %,%.opt,$(BASEPROGRAMS)): %.opt: %.opt.o hexdump.o
 
 $(patsubst %,%.noopt,$(BASEPROGRAMS)): %.noopt: %.noopt.o hexdump.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
+
+
+attackme.o: attackme.cc $(BUILDSTAMP)
+	g++ $(CPPFLAGS) $(CXXFLAGS) -O1 $(DEPCFLAGS) -o $@ -c $<
+
+%.unsafe.o: %.cc $(BUILDSTAMP)
+	g++ $(CPPFLAGS) $(UNSAFEFLAGS) $(CXXFLAGS) -O1 $(DEPCFLAGS) -o $@ -c $<
+
+attackme: attackme.o
+	g++ $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+attackme.unsafe: attackme.unsafe.o
+	g++ $(CXXFLAGS) $(UNSAFEFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 
 mb-%: membench.o mb-%.o
