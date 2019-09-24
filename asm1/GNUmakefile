@@ -1,6 +1,6 @@
-ASMS := $(patsubst %.cc,%.s,$(sort $(wildcard f[0-9][0-9].cc)))
+ASMS := $(patsubst %.cc,%.s,$(sort $(wildcard f[0-9][0-9].cc f[0-9][0-9][a-z].cc)))
 ASM_OBJECTS := $(patsubst %.s,%.o,$(ASMS))
-ASM_PROGRAMS := $(shell grep -l main $(wildcard f[0-9][0-9].s f[0-9][0-9].cc) | sed 's/\.[cs]*//' | sort -u)
+ASM_PROGRAMS := $(shell grep -l main $(wildcard f[0-9][0-9].s f[0-9][0-9].cc f[0-9][0-9][a-z].s f[0-9][0-9][a-z].cc) | sed 's/\.[cs]*//' | sort -u)
 DEFAULT_ASM_CXXFLAGS = -O1
 DEFAULT_ASM_CXXFLAGS_DEBUG = -g $(DEFAULT_ASM_CXXFLAGS)
 

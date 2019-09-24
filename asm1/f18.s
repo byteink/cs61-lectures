@@ -8,5 +8,5 @@ _Z3sumPi:
 	ret
 .LFE0:
 	.size	_Z3sumPi, .-_Z3sumPi
-	.ident	"GCC: (Ubuntu 7.3.0-16ubuntu3) 7.3.0"
+	.ident	"GCC: (Ubuntu 7.4.0-1ubuntu1~18.04.1) 7.4.0"
 	.section	.note.GNU-stack,"",@progbits

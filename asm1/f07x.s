@@ -4,23 +4,19 @@
 	.type	_Z3sumv, @function
 _Z3sumv:
 .LFB0:
-	.cfi_startproc
 	movl	aa(%rip), %eax
 	addl	ai(%rip), %eax
 	addl	au(%rip), %eax
 	addl	bi(%rip), %eax
 	ret
-	.cfi_endproc
 .LFE0:
 	.size	_Z3sumv, .-_Z3sumv
 	.globl	main
 	.type	main, @function
 main:
 .LFB1:
-	.cfi_startproc
 	call	_Z3sumv
 	rep ret
-	.cfi_endproc
 .LFE1:
 	.size	main, .-main
 	.globl	bi

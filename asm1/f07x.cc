@@ -9,6 +9,6 @@ int sum() {
     return ai + au + aa[0] + bi;
 }
 
-main () {
+int main() {
     return sum();
 }
