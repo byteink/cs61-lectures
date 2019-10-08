@@ -1,5 +1,5 @@
 QEMUIMAGEFILES = demoos.img
-all: $(QEMUIMAGEFILES)
+all: $(QEMUIMAGEFILES) attack
 
 # Place local configuration options, such as `CC=clang`, in
 # `config.mk` so you don't have to list them every time.
@@ -131,6 +131,12 @@ $(OBJDIR)/mkbootdisk: build/mkbootdisk.cc $(BUILDSTAMPS)
 
 demoos.img: $(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel
 	$(call run,$(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel > $@,CREATE $@)
+
+
+# How to make `attack`
+
+attack: attack.cc $(BUILDSTAMPS)
+	$(call run,$(HOSTCXX) $(CPPFLAGS) $(HOSTCXXFLAGS) $(DEPCFLAGS_AT) -o $@,HOSTCOMPILE,$<)
 
 
 # How to run QEMU

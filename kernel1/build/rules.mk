@@ -140,7 +140,7 @@ check-qemu: $(QEMU_PRELOAD_LIBRARY) check-qemu-console
 
 # Delete the build
 clean:
-	$(call run,rm -rf $(DEPSDIR) $(OBJDIR) *.img core *.core,CLEAN)
+	$(call run,rm -rf $(DEPSDIR) $(OBJDIR) *.img core *.core attack,CLEAN)
 
 realclean: clean
 	$(call run,rm -rf $(DISTDIR)-$(USER).tar.gz $(DISTDIR)-$(USER))
