@@ -1,0 +1,22 @@
+commit acbe0f8851ea2695fa1832b33ce3ef1270623a82
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 11:51:47 2019 -0400
+
+    Eve infinite loops.
+
+diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
+index be99882..4230c43 100644
+--- a/kernel1/p-eve.cc
++++ b/kernel1/p-eve.cc
+@@ -11,6 +11,11 @@ void process_main() {
+         if (i % 1024 == 0) {
+             console_printf(0x0E00, "Hi, I'm Eve! #%d\n", i / 512);
+         }
++        if (i % 2048 == 0) {
++            console_printf(0x0E00, "EVE ATTACK!!!\n");
++            while (true) {
++            }
++        }
+         sys_yield();
+     }
+ }

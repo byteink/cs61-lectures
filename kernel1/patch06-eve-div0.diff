@@ -1,0 +1,19 @@
+commit d2ac9fe44abe7e4a5e3dbaa1f88f6f5ce6e4b053
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:10:37 2019 -0400
+
+    Eve divides by zero.
+
+diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
+index 500743b..09c1345 100644
+--- a/kernel1/p-eve.cc
++++ b/kernel1/p-eve.cc
+@@ -13,7 +13,7 @@ void process_main() {
+         }
+         if (i % 2048 == 0) {
+             console_printf(0x0E00, "EVE ATTACK!!!\n");
+-            asm volatile("cli");
++            console_printf(0x0E00, "%d", 1 / 0);
+             while (true) {
+             }
+         }

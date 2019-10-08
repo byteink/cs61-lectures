@@ -1,0 +1,18 @@
+commit 532a50e9997026054b9a14589e231a2eb027cba1
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:06:39 2019 -0400
+
+    Disable interrupts.
+
+diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
+index 4230c43..500743b 100644
+--- a/kernel1/p-eve.cc
++++ b/kernel1/p-eve.cc
+@@ -13,6 +13,7 @@ void process_main() {
+         }
+         if (i % 2048 == 0) {
+             console_printf(0x0E00, "EVE ATTACK!!!\n");
++            asm volatile("cli");
+             while (true) {
+             }
+         }

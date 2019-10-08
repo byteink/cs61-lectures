@@ -1,0 +1,18 @@
+commit e1f270ecb22dc579e3fafddb37c073e9e1fffec2
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:11:17 2019 -0400
+
+    Kernel handles divide-by-zero exception.
+
+diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
+index f085f1f..e2e1f56 100644
+--- a/kernel1/kernel.cc
++++ b/kernel1/kernel.cc
+@@ -196,6 +196,7 @@ void exception(regstate* regs) {
+         schedule();
+     }
+ 
++    case INT_DE:
+     case INT_GP:
+         if (regs->reg_cs & 3) {
+             // User fault

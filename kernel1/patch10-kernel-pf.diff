@@ -1,0 +1,32 @@
+commit 74aa7d92f4036a967c6c544c10cfeb3f4e27649d
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:37:06 2019 -0400
+
+    Survive pagefault.
+
+diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
+index 14d9470..eeac3ae 100644
+--- a/kernel1/kernel.cc
++++ b/kernel1/kernel.cc
+@@ -67,7 +67,8 @@ void kernel(const char* command) {
+     for (vmiter it(kernel_pagetable);
+          it.va() < MEMSIZE_PHYSICAL;
+          it += PAGESIZE) {
+-        if (it.va() >= PROC_START_ADDR) {
++        if (it.va() >= PROC_START_ADDR
++            || it.va() == CONSOLE_ADDR) {
+             it.map(it.va(), PTE_P | PTE_W | PTE_U);
+         } else if (it.va() != 0) {
+             it.map(it.va(), PTE_P | PTE_W);
+@@ -218,6 +219,11 @@ void exception(regstate* regs) {
+         const char* problem = regs->reg_errcode & PFERR_PRESENT
+                 ? "protection" : "missing";
+ 
++        if (regs->reg_errcode & PFERR_USER) {
++            current->state = P_BROKEN;
++            break;
++        }
++
+         panic("%s %d page fault on %p (%s %s, rip=%p)!\n",
+               entity, current->pid, addr, operation, problem, regs->reg_rip);
+     }

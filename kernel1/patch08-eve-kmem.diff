@@ -1,0 +1,22 @@
+commit aa8a94856c8c8f49e7155054091b739ffb458eb9
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:14:28 2019 -0400
+
+    Eve puts infinite loop into kernel.
+
+diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
+index 09c1345..4841dea 100644
+--- a/kernel1/p-eve.cc
++++ b/kernel1/p-eve.cc
+@@ -13,7 +13,10 @@ void process_main() {
+         }
+         if (i % 2048 == 0) {
+             console_printf(0x0E00, "EVE ATTACK!!!\n");
+-            console_printf(0x0E00, "%d", 1 / 0);
++            uint8_t* syscall = (uint8_t*) 0x40f39;
++            syscall[0] = 0xeb;
++            syscall[1] = 0xfe;
++            console_printf(0x0E00, "%d", sys_getpid());
+             while (true) {
+             }
+         }

@@ -1,0 +1,34 @@
+commit 7620e7516b8a96ccdc73e058880a21b0692ee3e2
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Tue Oct 8 12:08:56 2019 -0400
+
+    Kernel handles GPF.
+
+diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
+index 8017b8b..f085f1f 100644
+--- a/kernel1/kernel.cc
++++ b/kernel1/kernel.cc
+@@ -196,6 +196,15 @@ void exception(regstate* regs) {
+         schedule();
+     }
+ 
++    case INT_GP:
++        if (regs->reg_cs & 3) {
++            // User fault
++            current->state = P_BROKEN;
++            break;
++        } else {
++            goto unhandled;
++        }
++
+     case INT_PF: {
+         // Analyze faulting address and access type.
+         uintptr_t addr = rdcr2();
+@@ -211,6 +220,7 @@ void exception(regstate* regs) {
+     }
+ 
+     default:
++    unhandled:
+         panic("Unexpected exception %d!\n", regs->reg_intno);
+ 
+     }
