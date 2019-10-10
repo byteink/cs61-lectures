@@ -1,8 +1,8 @@
-commit e68c643480a5bd1ebca4f218884ddfad8b700675
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 11:51:47 2019 -0400
+From 4004b979db5afa357f776bb3308784a2dd734ac0 Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:23:06 -0400
+Subject: [PATCH] Eve infinite loops.
 
-    Eve infinite loops.
 
 diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
 index be99882..4230c43 100644

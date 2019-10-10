@@ -1,14 +1,14 @@
-commit c28d24011a1e87a455350c093ca19dc3ab0222b7
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:11:17 2019 -0400
+From 42b2b0366e60f2db8bbe1b72e8cff3e8eedb9a3a Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:24:53 -0400
+Subject: [PATCH] Kernel handles divide-by-zero exception.
 
-    Kernel handles divide-by-zero exception.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 95b58a3..b2ead24 100644
+index 09b964a..54c3307 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
-@@ -181,6 +181,7 @@ void exception(regstate* regs) {
+@@ -182,6 +182,7 @@ void exception(regstate* regs) {
          schedule();
      }
  

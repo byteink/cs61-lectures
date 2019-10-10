@@ -1,8 +1,8 @@
-commit b08076a6878b7e38e8efbf7a03857463410088c0
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:06:39 2019 -0400
+From 54d2d1035dbfb6dc2f200b3aa477e9f963a719a8 Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:23:44 -0400
+Subject: [PATCH] Disable interrupts.
 
-    Disable interrupts.
 
 diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
 index 4230c43..500743b 100644

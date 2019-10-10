@@ -1,11 +1,11 @@
-commit c8a6c9ed4038d29f320712f7237cbe2d189e8bf8
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Thu Oct 10 12:46:10 2019 -0400
+From a32d2ce278ddd9a70475355478cb56847f3ef7ee Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:29:34 -0400
+Subject: [PATCH] Kernel fixes pagefault handler.
 
-    Fix pagefault handling.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 4b888aa..1acdcac 100644
+index 0129c9e..79899be 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
 @@ -67,7 +67,8 @@ void kernel(const char* command) {
@@ -18,11 +18,13 @@ index 4b888aa..1acdcac 100644
              it.map(it.va(), PTE_P | PTE_W | PTE_U);
          } else if (it.va() != 0) {
              it.map(it.va(), PTE_P | PTE_W);
-@@ -206,7 +207,12 @@ void exception(regstate* regs) {
+@@ -207,7 +208,14 @@ void exception(regstate* regs) {
          console_printf(COLOR_ERROR,
                "%s %d page fault on %p (%s %s, rip=%p)!\n",
                entity, current->pid, addr, operation, problem, regs->reg_rip);
 -        goto unhandled;
++        /* regs->reg_rip += 8;        // skip over faulting instruction */
++        /* regs->reg_rip = 0x140000;  // restart eve program */
 +        if (regs->reg_errcode & PFERR_USER) {
 +            current->state = P_BROKEN;
 +            break;

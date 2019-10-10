@@ -1,18 +1,18 @@
-commit 20b6e92946a23655f046e229c7edb84bbe704a23
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:39:49 2019 -0400
+From 1e6ec37e2802a2fcb04d97f9adcd2e8247b8ee7f Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:30:53 -0400
+Subject: [PATCH] Eve attacks Alice directly.
 
-    Eve attacks Alice directly.
 
 diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
-index 4841dea..4152d0c 100644
+index b990297..4152d0c 100644
 --- a/kernel1/p-eve.cc
 +++ b/kernel1/p-eve.cc
 @@ -13,10 +13,9 @@ void process_main() {
          }
          if (i % 2048 == 0) {
              console_printf(0x0E00, "EVE ATTACK!!!\n");
--            uint8_t* syscall = (uint8_t*) 0x40f39;
+-            uint8_t* syscall = (uint8_t*) 0x40ad6;
 -            syscall[0] = 0xeb;
 -            syscall[1] = 0xfe;
 -            console_printf(0x0E00, "%d", sys_getpid());

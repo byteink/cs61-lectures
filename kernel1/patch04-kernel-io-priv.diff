@@ -1,11 +1,11 @@
-commit 55260ebb7a2794945aeb1513f2c1b86b870e15b5
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:07:30 2019 -0400
+From 81f969b464012df9579651a8871ec3a8f574c53b Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:24:00 -0400
+Subject: [PATCH] Kernel denies interrupt privilege.
 
-    Kernel denies interrupt privilege.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 28d01ff..3c8d226 100644
+index a183df3..f19251d 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
 @@ -137,8 +137,8 @@ void process_setup(pid_t pid, const char* program_name) {

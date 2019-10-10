@@ -1,8 +1,8 @@
-commit 702a1d95d91e3ff004f8fd6c730ca4f93b401eb7
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:10:37 2019 -0400
+From 771da2123e8e8f4f89d4fbbcd9b71e834f75e0b5 Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:24:31 -0400
+Subject: [PATCH] Eve divides by zero.
 
-    Eve divides by zero.
 
 diff --git a/kernel1/p-eve.cc b/kernel1/p-eve.cc
 index 500743b..09c1345 100644

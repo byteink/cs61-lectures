@@ -1,11 +1,11 @@
-commit 68b9c0063b8d295e0f78f9d171b87d128dfbd5fb
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Thu Oct 10 12:21:04 2019 -0400
+From c2472df32afbcab3ff0c7a173e6d6a287a312221 Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:31:12 -0400
+Subject: [PATCH] Kernel isolates process memory spaces.
 
-    Kernel isolates process memory spaces.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 1acdcac..a1a5cf6 100644
+index 79899be..d3ad959 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
 @@ -108,7 +108,28 @@ void process_setup(pid_t pid, const char* program_name) {

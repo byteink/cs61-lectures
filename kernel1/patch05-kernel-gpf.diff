@@ -1,14 +1,14 @@
-commit 7bf668f0afc0b06d79909e0afadb0ce83e180c0e
-Author: Eddie Kohler <ekohler@gmail.com>
-Date:   Tue Oct 8 12:08:56 2019 -0400
+From ada0b3c0a566831068e8a354c58243243aafd21e Mon Sep 17 00:00:00 2001
+From: Eddie Kohler <ekohler@gmail.com>
+Date: Thu, 10 Oct 2019 15:24:11 -0400
+Subject: [PATCH] Kernel handles GPF.
 
-    Kernel handles GPF.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 3c8d226..95b58a3 100644
+index f19251d..09b964a 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
-@@ -181,6 +181,15 @@ void exception(regstate* regs) {
+@@ -182,6 +182,15 @@ void exception(regstate* regs) {
          schedule();
      }
  
