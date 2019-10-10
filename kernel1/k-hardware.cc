@@ -21,6 +21,7 @@ static void init_kernel_memory();
 static void init_interrupts();
 static void init_constructors();
 static void init_cpu_state();
+static void stash_kernel_data(bool restore);
 extern "C" { extern void exception_entry(); }
 extern "C" { extern void syscall_entry(); }
 
@@ -92,6 +93,8 @@ uint64_t kernel_gdt_segments[7];
 static x86_64_taskstate kernel_taskstate;
 
 void init_kernel_memory() {
+    stash_kernel_data(false);
+
     // initialize segments
     kernel_gdt_segments[0] = 0;
     set_app_segment(&kernel_gdt_segments[SEGSEL_KERN_CODE >> 3],
@@ -132,7 +135,7 @@ void init_kernel_memory() {
     kernel_pagetable[1].entry[3] =
         (3UL << 30) | PTE_P | PTE_W | PTE_PS;
 
-    // initalize it with user-accessible mappings for physical memory,
+    // user-accessible mappings for physical memory,
     // except that (for debuggability) nullptr is totally inaccessible
     for (vmiter it(kernel_pagetable);
          it.va() < MEMSIZE_PHYSICAL;
@@ -530,8 +533,9 @@ int keyboard_readc() {
 
 // symtab: reference to kernel symbol table; useful for debugging.
 // The `mkchickadeesymtab` function fills this structure in.
+#define SYMTAB_ADDR 0x1000000
 elf_symtabref symtab = {
-    reinterpret_cast<elf_symbol*>(0x1000000), 0, nullptr, 0
+    reinterpret_cast<elf_symbol*>(SYMTAB_ADDR), 0, nullptr, 0
 };
 
 // lookup_symbol(addr, name, start)
@@ -543,8 +547,9 @@ __no_asan
 bool lookup_symbol(uintptr_t addr, const char** name, uintptr_t* start) {
     if (rdcr3() != (uintptr_t) kernel_pagetable) {
         return false;
-    } else if (!kernel_pagetable[2].entry[8]) {
-        kernel_pagetable[2].entry[8] = 0x1000000 | PTE_P | PTE_W | PTE_PS;
+    } else if (!kernel_pagetable[2].entry[SYMTAB_ADDR / 0x200000]) {
+        kernel_pagetable[2].entry[SYMTAB_ADDR / 0x200000] =
+            SYMTAB_ADDR | PTE_P | PTE_W | PTE_PS;
     }
 
     size_t l = 0;
@@ -723,14 +728,14 @@ void error_printf(const char* format, ...) {
 
 
 // check_keyboard
-//    Check for the user typing a control key. 'a', 'f', and 'e' cause a soft
-//    reboot where the kernel runs the allocator programs, "fork", or
-//    "forkexit", respectively. Control-C or 'q' exit the virtual machine.
+//    Check for the user typing a control key. 'a', 'e', 'r', and 'x'
+//    cause a soft where the kernel runs alice, eve, recurse, or alice+eve,
+//    respectively. Control-C or 'q' exit the virtual machine.
 //    Returns key typed or -1 for no key.
 
 int check_keyboard() {
     int c = keyboard_readc();
-    if (c == 'a' || c == 'r') {
+    if (c == 'a' || c == 'e' || c == 'r' || c == 'x') {
         // Turn off the timer interrupt.
         init_timer(-1);
         // Install a temporary page table to carry us through the
@@ -746,13 +751,26 @@ int check_keyboard() {
         // though it will get overwritten as the kernel runs.
         uint32_t multiboot_info[5];
         multiboot_info[0] = 4;
-        const char* argument = "alice";
-        if (c == 'r') {
+        const char* argument = "aliceandeve";
+        if (c == 'a') {
+            argument = "alice";
+        } else if (c == 'e') {
+            argument = "eve";
+        } else if (c == 'r') {
             argument = "recurse";
         }
         uintptr_t argument_ptr = (uintptr_t) argument;
         assert(argument_ptr < 0x100000000L);
         multiboot_info[4] = (uint32_t) argument_ptr;
+        // restore initial value of data segment for reboot support
+        stash_kernel_data(true);
+        extern uint8_t _data_start, _edata, _kernel_end;
+        uintptr_t data_size = (uintptr_t) &_edata - (uintptr_t) &_data_start;
+        uintptr_t zero_size = (uintptr_t) &_kernel_end - (uintptr_t) &_edata;
+        uint8_t* data_stash = (uint8_t*) (SYMTAB_ADDR - data_size);
+        memcpy(&_data_start, data_stash, data_size);
+        memset(&_edata, 0, zero_size);
+        // restart kernel
         asm volatile("movl $0x2BADB002, %%eax; jmp kernel_entry"
                      : : "b" (multiboot_info) : "memory");
     } else if (c == 0x03 || c == 'q') {
@@ -783,15 +801,16 @@ void panic(const char* format, ...) {
     va_start(val, format);
     panicking = true;
 
+    cursorpos = CPOS(24, 80);
     if (format) {
         // Print panic message to both the screen and the log
-        int cpos = error_printf(CPOS(23, 0), COLOR_ERROR, "PANIC: ");
-        cpos = error_vprintf(cpos, COLOR_ERROR, format, val);
-        if (CCOL(cpos)) {
-            error_printf(cpos, COLOR_ERROR, "\n");
+        error_printf(-1, COLOR_ERROR, "PANIC: ");
+        error_vprintf(-1, COLOR_ERROR, format, val);
+        if (CCOL(cursorpos)) {
+            error_printf(-1, COLOR_ERROR, "\n");
         }
     } else {
-        error_printf(CPOS(23, 0), COLOR_ERROR, "PANIC");
+        error_printf(-1, COLOR_ERROR, "PANIC");
         log_printf("\n");
     }
 
@@ -957,6 +976,25 @@ void __cxa_atexit(...) {
 
 }
 
+// stash_kernel_data
+//    Soft reboot requires that we restore kernel data memory to
+//    its initial state, so we store its initial state in unused
+//    physical memory.
+static void stash_kernel_data(bool reboot) {
+    // stash initial value of data segment for soft-reboot support
+    extern uint8_t _data_start, _edata, _kernel_end;
+    uintptr_t data_size = (uintptr_t) &_edata - (uintptr_t) &_data_start;
+    uint8_t* data_stash = (uint8_t*) (SYMTAB_ADDR - data_size);
+    if (reboot) {
+        memcpy(&_data_start, data_stash, data_size);
+        memset(&_edata, 0, &_kernel_end - &_edata);
+    } else {
+        memcpy(data_stash, &_data_start, data_size);
+    }
+}
 
-// the `proc::pagetable` member must come first in the structure
-static_assert(offsetof(proc, pagetable) == 0);
+
+// `proc` members have fixed offsets
+static_assert(offsetof(proc, pagetable) == 0, "proc::pagetable has bad offset");
+static_assert(offsetof(proc, state) == 12, "proc::state has bad offset");
+static_assert(offsetof(proc, regs) == 16, "proc::refs has bad offset");

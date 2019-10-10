@@ -47,9 +47,12 @@ class vmiter {
     // map current va to `pa` with permissions `perm`
     // Current va must be page-aligned. Calls `kalloc` to allocate
     // page table pages if necessary. Panics on failure.
-    void map(uintptr_t pa, int perm = PTE_P | PTE_W | PTE_U);
-    // this version takes a pointer
-    inline void map(void* pa_ptr, int perm = PTE_P | PTE_W | PTE_U);
+    inline void map(uintptr_t pa, int perm);
+    inline void map(void* kptr, int perm);
+
+    // Like `map`, but returns 0 on success and -1 on failure.
+    int try_map(uintptr_t pa, int perm);
+    inline int try_map(void* kptr, int perm);
 
   private:
     x86_64_pagetable* pt_;
@@ -71,9 +74,9 @@ class vmiter {
 // This is mainly useful when freeing a page table, as in:
 // ```
 // for (ptiter it(pt); it.active(); it.next()) {
-//     freepage(it.ptp());
+//     kfree(it.kptr());
 // }
-// freepage(pt);
+// kfree(pt);
 // ```
 // Note that `ptiter` will never visit the level 4 page table page.
 
@@ -87,9 +90,9 @@ class ptiter {
     inline uintptr_t last_va() const;       // one past last va covered by ptp
     inline bool active() const;             // does va exist?
     inline bool low() const;                // is va low?
+    inline x86_64_pagetable* kptr() const;  // current page table page
+    inline uintptr_t pa() const;            // physical address of kptr
     inline int level() const;               // current level (0-2)
-    inline x86_64_pagetable* ptp() const;   // current page table page
-    inline uintptr_t ptp_pa() const;        // physical address of ptp
 
     // move to next page table page in depth-first order
     inline void next();
@@ -168,8 +171,15 @@ inline vmiter& vmiter::operator-=(intptr_t delta) {
 inline void vmiter::next_range() {
     real_find(last_va());
 }
-inline void vmiter::map(void* pa_ptr, int perm) {
-    map((uintptr_t) pa_ptr, perm);
+inline void vmiter::map(uintptr_t pa, int perm) {
+    int r = try_map(pa, perm);
+    assert(r == 0);
+}
+inline void vmiter::map(void* kp, int perm) {
+    map((uintptr_t) kp, perm);
+}
+inline int vmiter::try_map(void* kp, int perm) {
+    return try_map((uintptr_t) kp, perm);
 }
 
 inline ptiter::ptiter(x86_64_pagetable* pt, uintptr_t va)
@@ -197,11 +207,11 @@ inline int ptiter::level() const {
 inline void ptiter::next() {
     down(true);
 }
-inline uintptr_t ptiter::ptp_pa() const {
+inline uintptr_t ptiter::pa() const {
     return *pep_ & PTE_PAMASK;
 }
-inline x86_64_pagetable* ptiter::ptp() const {
-    return reinterpret_cast<x86_64_pagetable*>(ptp_pa());
+inline x86_64_pagetable* ptiter::kptr() const {
+    return reinterpret_cast<x86_64_pagetable*>(pa());
 }
 
 inline bool vmiter::perm(uintptr_t last_va, uint64_t p) {

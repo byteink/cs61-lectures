@@ -1,15 +1,15 @@
-commit 3930c6d4a996d4732c458f7c82e03f18cf04ea5c
+commit 55260ebb7a2794945aeb1513f2c1b86b870e15b5
 Author: Eddie Kohler <ekohler@gmail.com>
 Date:   Tue Oct 8 12:07:30 2019 -0400
 
     Kernel denies interrupt privilege.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 297666e..8017b8b 100644
+index 28d01ff..3c8d226 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
-@@ -152,8 +152,8 @@ void process_setup(pid_t pid, const char* program_name) {
-     vmiter(ptable[pid].pagetable, stack_addr).map(stack_addr, PTE_PWU);
+@@ -137,8 +137,8 @@ void process_setup(pid_t pid, const char* program_name) {
+     pages[stack_addr / PAGESIZE].refcount = 1;
      ptable[pid].regs.reg_rsp = stack_addr + PAGESIZE;
  
 -    // allow process to control interrupts

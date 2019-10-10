@@ -1,22 +1,37 @@
-commit 9d8484caa923726979a4b61fc75ab85a1d230ce9
+commit e9eee6269f56abb48e49646f25da50fb67b5b69c
 Author: Eddie Kohler <ekohler@gmail.com>
 Date:   Tue Oct 8 12:32:05 2019 -0400
 
     Kernel protects its memory.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index e2e1f56..14d9470 100644
+index b2ead24..1acdcac 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
-@@ -67,8 +67,10 @@ void kernel(const char* command) {
+@@ -67,8 +67,11 @@ void kernel(const char* command) {
      for (vmiter it(kernel_pagetable);
           it.va() < MEMSIZE_PHYSICAL;
           it += PAGESIZE) {
 -        if (it.va() != 0) {
-+        if (it.va() >= PROC_START_ADDR) {
++        if (it.va() >= PROC_START_ADDR
++            || it.va() == CONSOLE_ADDR) {
              it.map(it.va(), PTE_P | PTE_W | PTE_U);
 +        } else if (it.va() != 0) {
 +            it.map(it.va(), PTE_P | PTE_W);
          } else {
              it.map(it.va(), 0);
          }
+@@ -204,7 +207,12 @@ void exception(regstate* regs) {
+         console_printf(COLOR_ERROR,
+               "%s %d page fault on %p (%s %s, rip=%p)!\n",
+               entity, current->pid, addr, operation, problem, regs->reg_rip);
+-        goto unhandled;
++        if (regs->reg_errcode & PFERR_USER) {
++            current->state = P_BROKEN;
++            break;
++        } else {
++            goto unhandled;
++        }
+     }
+ 
+     default:

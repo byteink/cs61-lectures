@@ -286,19 +286,6 @@ struct printer {
 };
 
 
-// error_printf(cursor, color, format, ...)
-//    Like `console_printf`, but `color` defaults to `COLOR_ERROR`, and
-//    in the kernel, the message is also printed to the log.
-int error_printf(int cpos, int color, const char* format, ...)
-    __attribute__((noinline, cold));
-int error_vprintf(int cpos, int color, const char* format, va_list val)
-    __attribute__((noinline, cold));
-void error_printf(int color, const char* format, ...)
-    __attribute__((noinline, cold));
-void error_printf(const char* format, ...)
-    __attribute__((noinline, cold));
-
-
 // Assertions
 
 // assert(x)

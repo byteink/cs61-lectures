@@ -74,7 +74,7 @@ inline int sys_getsysname(char* buf) {
 
 // sys_panic(msg)
 //    Panic.
-[[noreturn]] inline pid_t sys_panic(const char* msg) {
+[[noreturn]] inline void sys_panic(const char* msg) {
     make_syscall(SYSCALL_PANIC, (uintptr_t) msg);
 
     // should never get here

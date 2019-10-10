@@ -71,8 +71,8 @@ exception_handler %exception_number
 //    Most exception handlers jump here.
 .globl exception_entry
 exception_entry:
-        pushq %gs
-        pushq %fs
+        push %gs
+        push %fs
         pushq %r15
         pushq %r14
         pushq %r13
@@ -98,13 +98,19 @@ exception_entry:
         // `exception` should never return.
 
 
-        .globl _Z16exception_returnP16x86_64_pagetableP8regstate
-_Z16exception_returnP16x86_64_pagetableP8regstate:
-        // load process page table (first argument)
-        movq %rdi, %cr3
+.globl _Z16exception_returnP4proc
+_Z16exception_returnP4proc:
+        // check process state
+        movl 12(%rdi), %eax
+        cmpl $P_RUNNABLE, %eax
+        jne proc_runnable_fail
 
-        // restore registers (second argument)
-        movq %rsi, %rsp
+        // load process page table
+        movq (%rdi), %rax
+        movq %rax, %cr3
+
+        // restore registers
+        leaq 16(%rdi), %rsp
         popq %rax
         popq %rcx
         popq %rdx
@@ -120,8 +126,8 @@ _Z16exception_returnP16x86_64_pagetableP8regstate:
         popq %r13
         popq %r14
         popq %r15
-        popq %fs
-        popq %gs
+        pop %fs
+        pop %gs
         addq $16, %rsp
 
         // return to process
@@ -146,8 +152,8 @@ syscall_entry:
         // other registers:
         subq $8, %rsp                  // error code unused
         pushq $-1                      // reg_intno
-        pushq %gs
-        pushq %fs
+        push %gs
+        push %fs
         pushq %r15 // callee saved
         pushq %r14 // callee saved
         pushq %r13 // callee saved
@@ -172,6 +178,12 @@ syscall_entry:
         movq %rsp, %rdi
         call _Z7syscallP8regstate
 
+        // check process state
+        movq current, %rcx
+        movl 12(%rcx), %ecx
+        cmpl $P_RUNNABLE, %ecx
+        jne proc_runnable_fail
+
         // load process page table
         movq current, %rcx
         movq (%rcx), %rcx
@@ -182,3 +194,17 @@ syscall_entry:
 
         // return to process
         iretq
+
+
+proc_runnable_fail:
+        movq $proc_runnable_assert, %rdx
+        xorl %esi, %esi
+        movq $k_exception_str, %rdi
+        callq _Z11assert_failPKciS0_
+
+
+.section .rodata.str1.1
+k_exception_str:
+        .asciz "k-exception.S"
+proc_runnable_assert:
+        .asciz "current->state == P_RUNNABLE"

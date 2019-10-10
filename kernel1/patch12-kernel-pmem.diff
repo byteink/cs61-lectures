@@ -1,0 +1,40 @@
+commit 68b9c0063b8d295e0f78f9d171b87d128dfbd5fb
+Author: Eddie Kohler <ekohler@gmail.com>
+Date:   Thu Oct 10 12:21:04 2019 -0400
+
+    Kernel isolates process memory spaces.
+
+diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
+index 1acdcac..a1a5cf6 100644
+--- a/kernel1/kernel.cc
++++ b/kernel1/kernel.cc
+@@ -108,7 +108,28 @@ void process_setup(pid_t pid, const char* program_name) {
+     uintptr_t last_addr = PROC_START_ADDR + pid * PROCSIZE;
+ 
+     // initialize process page table
+-    ptable[pid].pagetable = kernel_pagetable;
++
++    // - 4-level skeleton
++    unsigned pageno = 1 + (pid - 1) * 4;
++
++    x86_64_pagetable* pt = (x86_64_pagetable*) (pageno * PAGESIZE);
++    for (unsigned i = 0; i != 4; ++i) {
++        assert(!pages[pageno + i].used());
++        pages[pageno + i].refcount = 1;
++        memset(&pt[i], 0, PAGESIZE);
++        pt[i].entry[0] = (uintptr_t) &pt[i + 1] | PTE_P | PTE_W | PTE_U;
++    }
++
++    // - actual entries
++    for (uintptr_t a = 0; a != PROC_START_ADDR; a += PAGESIZE) {
++        vmiter(pt, a).map(a, a ? PTE_P | PTE_W : 0);
++    }
++    vmiter(pt, CONSOLE_ADDR).map(CONSOLE_ADDR, PTE_P | PTE_W | PTE_U);
++    for (uintptr_t a = first_addr; a != last_addr; a += PAGESIZE) {
++        vmiter(pt, a).map(a, PTE_P | PTE_W | PTE_U);
++    }
++
++    ptable[pid].pagetable = pt;
+ 
+     // load the program
+     program_loader loader(program_name);

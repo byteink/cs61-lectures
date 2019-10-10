@@ -18,10 +18,10 @@
 // +-----+--------------------+----------------+--------------------+---------/
 // 0  0x40000              0x80000 0xA0000 0x100000             0x140000
 //                                             ^
-//                                             | \___ PROC_SIZE ___/
+//                                             | \___ PROCSIZE ____/
 //                                      PROC_START_ADDR
 
-#define PROC_SIZE 0x40000       // initial state only
+#define PROCSIZE 0x40000
 
 proc ptable[NPROC];             // array of process descriptors
                                 // Note that `ptable[0]` is never used.
@@ -34,8 +34,8 @@ static std::atomic<unsigned long> ticks; // # timer interrupts so far
 // Memory state
 //    Information about physical page with address `pa` is stored in
 //    `pages[pa / PAGESIZE]`. In the handout code, each `pages` entry
-//    holds an *owner*, which is 0 for free pages and non-zero for
-//    allocated pages. You can change this as you see fit.
+//    holds an `refcount` member, which is 0 for free pages.
+//    You can change this as you see fit.
 
 pageinfo pages[NPAGES];
 
@@ -59,7 +59,7 @@ void kernel(const char* command) {
     // clear screen
     console_clear();
 
-    // initalize memory mapping:
+    // (re-)initalize kernel page table:
     // all of physical memory is accessible except `nullptr`
     for (vmiter it(kernel_pagetable);
          it.va() < MEMSIZE_PHYSICAL;
@@ -71,37 +71,19 @@ void kernel(const char* command) {
         }
     }
 
-    // set up process descriptors
+    // set up process descriptors and run first process
     for (pid_t i = 0; i < NPROC; i++) {
         ptable[i].pid = i;
         ptable[i].state = P_FREE;
     }
 
-    if (command && program_loader(command).present()== 0) {
+    if (command && program_loader(command).present()) {
         process_setup(1, command);
+        run(&ptable[1]);
     } else {
-        process_setup(1, "eve");
-        process_setup(2, "alice");
-    }
-
-    // Switch to the first process using run()
-    run(&ptable[1]);
-}
-
-
-// kalloc_physical_page(pa, owner)
-//    Allocate the physical page at address `pa` for process `owner`.
-
-void* kalloc_physical_page(uintptr_t pa, pid_t owner) {
-    assert((pa & PAGEOFFMASK) == 0);
-
-    if (allocatable_physical_address(pa)
-        && pages[pa / PAGESIZE].owner == 0) {
-        pages[pa / PAGESIZE].owner = owner;
-        memset((void*) pa, 0, PAGESIZE);
-        return (void*) pa;
-    } else {
-        return nullptr;
+        process_setup(1, "alice");
+        process_setup(2, "eve");
+        run(&ptable[2]);
     }
 }
 
@@ -114,7 +96,12 @@ void* kalloc_physical_page(uintptr_t pa, pid_t owner) {
 void process_setup(pid_t pid, const char* program_name) {
     init_process(&ptable[pid], 0);
 
-    // set up initial page table
+    // We expect all process memory to reside between
+    // first_addr and last_addr.
+    uintptr_t first_addr = PROC_START_ADDR + (pid - 1) * PROCSIZE;
+    uintptr_t last_addr = PROC_START_ADDR + pid * PROCSIZE;
+
+    // initialize process page table
     ptable[pid].pagetable = kernel_pagetable;
 
     // load the program
@@ -125,10 +112,10 @@ void process_setup(pid_t pid, const char* program_name) {
         for (uintptr_t a = round_down(loader.va(), PAGESIZE);
              a < loader.va() + loader.size();
              a += PAGESIZE) {
-            if (!kalloc_physical_page(a, pid)) {
-                panic("Cannot allocate memory for process!");
-            }
-            vmiter(ptable[pid].pagetable, a).map(a, PTE_PWU);
+            assert(a >= first_addr && a < last_addr);
+            assert(!pages[a / PAGESIZE].used());
+            pages[a / PAGESIZE].refcount = 1;
+            vmiter(ptable[pid].pagetable, a).map(a, PTE_P | PTE_W | PTE_U);
         }
     }
 
@@ -142,11 +129,9 @@ void process_setup(pid_t pid, const char* program_name) {
     ptable[pid].regs.reg_rip = loader.entry();
 
     // allocate stack
-    uintptr_t stack_addr = PROC_START_ADDR + PROC_SIZE * pid - PAGESIZE;
-    if (!kalloc_physical_page(stack_addr, pid)) {
-        panic("Cannot allocate stack memory for process!");
-    }
-    vmiter(ptable[pid].pagetable, stack_addr).map(stack_addr, PTE_PWU);
+    uintptr_t stack_addr = last_addr - PAGESIZE;
+    assert(!pages[stack_addr / PAGESIZE].used());
+    pages[stack_addr / PAGESIZE].refcount = 1;
     ptable[pid].regs.reg_rsp = stack_addr + PAGESIZE;
 
     // allow process to control interrupts
@@ -198,11 +183,14 @@ void exception(regstate* regs) {
         const char* problem = regs->reg_errcode & PFERR_PRESENT
                 ? "protection" : "missing";
 
-        panic("%s %d page fault on %p (%s %s, rip=%p)!\n",
+        console_printf(COLOR_ERROR,
+              "%s %d page fault on %p (%s %s, rip=%p)!\n",
               entity, current->pid, addr, operation, problem, regs->reg_rip);
+        goto unhandled;
     }
 
     default:
+    unhandled:
         panic("Unexpected exception %d!\n", regs->reg_intno);
 
     }
@@ -301,7 +289,7 @@ void run(proc* p) {
 
     // This function is defined in k-exception.S. It restores the process's
     // registers then jumps back to user mode.
-    exception_return(p->pagetable, &p->regs);
+    exception_return(p);
 
     // should never get here
     while (true) {

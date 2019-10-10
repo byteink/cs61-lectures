@@ -42,17 +42,19 @@ SECTIONS {
 
     /* Data segment: read/write and zero-initialized globals */
     . = ALIGN(4096);       /* Align to a page boundary */
+    _data_start = .;
     .data : {
         *(.data .data.* .gnu.linkonce.d.*)
         . = ALIGN(16);
         interrupt_descriptors = .;
         KEEP (*(.interrupt_descriptors))
     } :text
+    _edata = .;
 
     .bss : {
         *(.bss .bss.* .gnu.linkonce.b.*)
     } :text
-    PROVIDE(_kernel_end = .);
+    _kernel_end = .;
 
     /DISCARD/ : { *(.eh_frame .note.GNU-stack) }
 }

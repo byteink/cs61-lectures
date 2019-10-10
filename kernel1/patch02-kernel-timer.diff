@@ -1,11 +1,11 @@
-commit 0031311f7fe40ab98daa32200785088d3f054d85
+commit 35b4c4dff4f6fab881d92266da951846af195ae6
 Author: Eddie Kohler <ekohler@gmail.com>
 Date:   Tue Oct 8 12:05:53 2019 -0400
 
     Enable timer interrupt.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index 878b421..297666e 100644
+index c56aa61..28d01ff 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
 @@ -56,6 +56,9 @@ void kernel(const char* command) {
@@ -18,7 +18,7 @@ index 878b421..297666e 100644
      // clear screen
      console_clear();
  
-@@ -188,6 +191,11 @@ void exception(regstate* regs) {
+@@ -173,6 +176,11 @@ void exception(regstate* regs) {
      // Actually handle the exception.
      switch (regs->reg_intno) {
  

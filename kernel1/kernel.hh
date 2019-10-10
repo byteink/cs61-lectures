@@ -14,20 +14,19 @@ struct elf_program;
 //    Functions, constants, and definitions for the kernel.
 
 
-// Process state type
-typedef enum procstate {
-    P_FREE = 0,                         // free slot
-    P_RUNNABLE,                         // runnable process
-    P_BLOCKED,                          // blocked process
-    P_BROKEN                            // faulted process
-} procstate_t;
+// Process state constants
+#define P_FREE      0                   // free slot
+#define P_RUNNABLE  1                   // runnable process
+#define P_BLOCKED   2                   // blocked process
+#define P_BROKEN    3                   // faulted process
 
 // Process descriptor type
 struct proc {
-    x86_64_pagetable* pagetable;        // process's page table (must be 1st)
+    x86_64_pagetable* pagetable;        // process's page table
     pid_t pid;                          // process ID
+    int state;                          // process state (see above)
     regstate regs;                      // process's current registers
-    procstate_t state;                  // process state (see above)
+    // The first 4 members of `proc` must not change, but you can add more.
 };
 
 // Process table
@@ -49,10 +48,14 @@ extern proc ptable[NPROC];
 #define NPAGES                  (MEMSIZE_PHYSICAL / PAGESIZE)
 
 // Virtual memory size
-#define MEMSIZE_VIRTUAL         0x300000
+#define MEMSIZE_VIRTUAL         0x200000
 
 struct pageinfo {
-    uint8_t owner;
+    uint8_t refcount;
+
+    bool used() const {
+        return this->refcount != 0;
+    }
 };
 extern pageinfo pages[NPAGES];
 
@@ -125,7 +128,7 @@ void check_page_table_mappings(x86_64_pagetable* pagetable);
 // exception_return
 //    Return from an exception to user mode: load the page table
 //    and registers and start the process back up. Defined in k-exception.S.
-[[noreturn]] void exception_return(x86_64_pagetable* pagetable, regstate* reg);
+[[noreturn]] void exception_return(proc* p);
 
 
 // console_show_cursor(cpos)
@@ -214,16 +217,16 @@ void log_vprintf(const char* format, va_list val) __attribute__((noinline));
 void log_backtrace(const char* prefix = "");
 void log_backtrace(const char* prefix, uintptr_t rsp, uintptr_t rbp);
 
-
-// error_printf, error_vprintf
-//    Print debugging messages to the console and to the host's
-//    `log.txt` file via `log_printf`.
-int error_printf(int cpos, int color, const char* format, ...)
-    __attribute__((noinline));
-int error_vprintf(int cpos, int color, const char* format, va_list val)
-    __attribute__((noinline));
-
 __no_asan
 bool lookup_symbol(uintptr_t addr, const char** name, uintptr_t* start);
+
+
+// error_vprintf, error_printf
+//    Print debugging messages to the console and to the host's
+//    `log.txt` file via `log_printf`.
+int error_vprintf(int cpos, int color, const char* format, va_list val);
+int error_printf(int cpos, int color, const char* format, ...);
+void error_printf(int color, const char* format, ...);
+void error_printf(const char* format, ...);
 
 #endif

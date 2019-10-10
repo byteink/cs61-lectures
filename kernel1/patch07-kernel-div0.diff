@@ -1,14 +1,14 @@
-commit e1f270ecb22dc579e3fafddb37c073e9e1fffec2
+commit c28d24011a1e87a455350c093ca19dc3ab0222b7
 Author: Eddie Kohler <ekohler@gmail.com>
 Date:   Tue Oct 8 12:11:17 2019 -0400
 
     Kernel handles divide-by-zero exception.
 
 diff --git a/kernel1/kernel.cc b/kernel1/kernel.cc
-index f085f1f..e2e1f56 100644
+index 95b58a3..b2ead24 100644
 --- a/kernel1/kernel.cc
 +++ b/kernel1/kernel.cc
-@@ -196,6 +196,7 @@ void exception(regstate* regs) {
+@@ -181,6 +181,7 @@ void exception(regstate* regs) {
          schedule();
      }
  

@@ -20,7 +20,9 @@ void process_main() {
     for (unsigned i = 0; i < 10; ++i) {
         console_printf(0x0E00, "f(%u) == %u\n", i, f(i));
     }
+    console_printf(0x0E00, "Goodbye now!\n");
 
     while (true) {
+        sys_yield();
     }
 }
