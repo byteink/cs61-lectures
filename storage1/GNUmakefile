@@ -1,5 +1,4 @@
-PROGRAMS = attackme attackme.unsafe \
-	$(sort $(patsubst %.cc,%,$(wildcard [rw][0-9]*.cc))) \
+PROGRAMS = $(sort $(patsubst %.cc,%,$(wildcard [rw][0-9]*.cc))) \
 	base-matrixmultiply matrixmultiply
 
 -include conf.mk
@@ -53,7 +52,7 @@ w%: w%.o
 	$(CC) $(CFLAGS) $(O) -o $@ $^
 
 DATASIZE := $(shell wc -c $(DATAFILE) 2>/dev/null | awk '{ print $$1 }')
-DATADEP := $(shell if test "$(DATASIZE)" -lt 51200000; then echo always; fi)
+DATADEP := $(shell if test "$(DATASIZE)" -lt 51200000 2>/dev/null; then echo always; fi)
 
 $(DATAFILE): $(DATADEP)
 	yes 77777777777777777777777777777777777777777 | tr -d '\n' | head -c 51200000 > $@
