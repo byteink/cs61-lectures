@@ -1,5 +1,5 @@
 PROGRAMS = $(sort $(patsubst %.cc,%,$(wildcard [rw][0-9]*.cc))) \
-	coherence cache
+	coherence cache forkmix
 
 -include conf.mk
 ifndef DATAFILE
@@ -25,7 +25,7 @@ r%: r%.o
 w%: w%.o
 	@$(call xrun,$(CXX) $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS),LINK $@)
 
-coherence cache: %: %.o
+coherence cache forkmix: %: %.o
 	@$(call xrun,$(CXX) $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS),LINK $@)
 
 matrixmultiply: matrixmultiply.o
