@@ -1,9 +1,9 @@
-PROGRAMS = fork1 fork2 fork2b fork3 \
-	forkmix-syscall forkmix-stdio forkmix-file
+PROGRAMS = manyfork myecho runmyecho forkmyecho spawnmyecho \
+	waitdemo childpipe selfpipe
 
 all: $(PROGRAMS)
 
-ALLPROGRAMS = $(PROGRAMS) manyfork myecho runmyecho forkmyecho spawnmyecho
+ALLPROGRAMS = $(PROGRAMS)
 
 O = 2
 include ../common/rules.mk
