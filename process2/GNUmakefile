@@ -1,5 +1,5 @@
 PROGRAMS = manyfork myecho runmyecho forkmyecho spawnmyecho \
-	waitdemo childpipe selfpipe
+	waitdemo
 
 all: $(PROGRAMS)
 
