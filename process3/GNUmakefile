@@ -1,4 +1,5 @@
-PROGRAMS = childpipe selfpipe filtermultiples primesieve
+PROGRAMS = childpipe selfpipe filtermultiples primesieve \
+	pipesizer
 
 all: $(PROGRAMS)
 
