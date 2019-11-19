@@ -41,7 +41,8 @@ int main(int, char** argv) {
     if (exited_pid == 0) {
         fprintf(stderr, "%s child timed out\n", argv[0]);
     } else if (WIFEXITED(status)) {
-        fprintf(stderr, "%s child exited with status %d after %g sec\n",
+        fprintf(stderr,
+                "%s child exited with status %d after %g sec\n",
                 argv[0], WEXITSTATUS(status), tstamp() - start_time);
     } else {
         fprintf(stderr, "%s child exited abnormally [%x]\n", argv[0], status);

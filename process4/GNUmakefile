@@ -1,5 +1,6 @@
-PROGRAMS = fork1 fork2 fork2b fork3 \
-	forkmix-syscall forkmix-stdio forkmix-file
+PROGRAMS = timedwait01-poll timedwait02-block timedwait02b-block \
+	timedwait03-blockvar timedwait04-alarm \
+	timedwait05-selfpipe timedwait06-signalfd
 
 all: $(PROGRAMS)
 
@@ -8,8 +9,9 @@ ALLPROGRAMS = fork1 fork2 fork2b fork3 \
 	manyfork myecho runmyecho forkmyecho spawnmyecho \
 	waitdemo \
 	selfpipe childpipe pipesizer filtermultiples primesieve \
-	timedwait01-poll timedwait02-block timedwait03-blockvar \
-	timedwait04-alarm timedwait05-selfpipe timedwait06-signalfd
+	timedwait01-poll timedwait02-block timedwait02b-block \
+	timedwait03-blockvar timedwait04-alarm \
+	timedwait05-selfpipe timedwait06-signalfd
 
 O = 2
 include ../common/rules.mk

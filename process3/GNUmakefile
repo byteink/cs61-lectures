@@ -1,6 +1,4 @@
-PROGRAMS = childpipe selfpipe filtermultiples primesieve \
-	timedwait01-poll timedwait02-block timedwait03-blockvar \
-	timedwait04-alarm timedwait05-selfpipe timedwait06-signalfd
+PROGRAMS = childpipe selfpipe filtermultiples primesieve
 
 all: $(PROGRAMS)
 

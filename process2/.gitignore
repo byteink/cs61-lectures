@@ -16,6 +16,12 @@ primesieve
 runmyecho
 selfpipe
 spawnmyecho
+timedwait01-poll
+timedwait02-block
+timedwait03-blockvar
+timedwait04-alarm
+timedwait05-selfpipe
+timedwait06-signalfd
 waitblock
 waitblocksafe1
 waitblocksafe2

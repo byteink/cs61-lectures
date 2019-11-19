@@ -23,10 +23,7 @@ int main(int, char** argv) {
 
     // Wait for the child and print its status
     r = usleep(750000);
-    if (r == -1 && errno == EINTR) {
-        fprintf(stderr, "%s parent interrupted by signal after %g sec\n",
-                argv[0], tstamp() - start_time);
-    }
+    (void) r;
 
     int status;
     pid_t exited_pid = waitpid(p1, &status, WNOHANG);
@@ -35,7 +32,8 @@ int main(int, char** argv) {
         fprintf(stderr, "%s child %d timed out\n", argv[0], p1);
     } else if (WIFEXITED(status)) {
         double lifetime = tstamp() - start_time;
-        fprintf(stderr, "%s child %d exited with status %d after %g sec\n",
+        fprintf(stderr,
+                "%s child %d exited with status %d after %g sec\n",
                 argv[0], p1, WEXITSTATUS(status), lifetime);
     } else {
         fprintf(stderr, "%s child %d exited abnormally [%x]\n",
