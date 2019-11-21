@@ -2,6 +2,8 @@
 #include <thread>
 #include <mutex>
 
+#define NUM_THREADS 4
+
 std::mutex mutex;
 
 void threadfunc(unsigned* x) {
@@ -13,12 +15,12 @@ void threadfunc(unsigned* x) {
 }
 
 int main() {
-    std::thread th[4];
+    std::thread th[NUM_THREADS];
     unsigned n = 0;
-    for (int i = 0; i != 4; ++i) {
+    for (int i = 0; i != NUM_THREADS; ++i) {
         th[i] = std::thread(threadfunc, &n);
     }
-    for (int i = 0; i != 4; ++i) {
+    for (int i = 0; i != NUM_THREADS; ++i) {
         th[i].join();
     }
     printf("%u\n", n);
