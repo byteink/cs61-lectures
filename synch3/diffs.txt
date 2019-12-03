@@ -1,0 +1,289 @@
+--- weensydb-01.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-02.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -119,6 +119,7 @@
+         }
+ 
+         // Handle connection
+-        handle_connection(cfd);
++        std::thread t(handle_connection, cfd);
++        t.detach();
+     }
+ }
+--- weensydb-02.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-03.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -12,6 +12,7 @@
+ 
+ #define NBUCKETS 1024
+ std::list<hash_item> hash[NBUCKETS];
++std::mutex hash_mutex;
+ 
+ 
+ // hash_get(key, create)
+@@ -39,6 +40,8 @@
+     size_t sz;
+ 
+     while (fgets(buf, BUFSIZ, fin)) {
++        hash_mutex.lock();
++
+         if (sscanf(buf, "get %s ", key) == 1) {
+             // find item
+             auto b = string_hash(key) % NBUCKETS;
+@@ -87,6 +90,8 @@
+             fprintf(f, "ERROR\r\n");
+             fflush(f);
+         }
++
++        hash_mutex.unlock();
+     }
+ 
+     if (ferror(fin)) {
+--- weensydb-03.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-04.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -12,7 +12,7 @@
+ 
+ #define NBUCKETS 1024
+ std::list<hash_item> hash[NBUCKETS];
+-std::mutex hash_mutex;
++std::mutex hash_mutex[NBUCKETS];
+ 
+ 
+ // hash_get(key, create)
+@@ -40,11 +40,10 @@
+     size_t sz;
+ 
+     while (fgets(buf, BUFSIZ, fin)) {
+-        hash_mutex.lock();
+-
+         if (sscanf(buf, "get %s ", key) == 1) {
+             // find item
+             auto b = string_hash(key) % NBUCKETS;
++            std::scoped_lock lock(hash_mutex[b]);
+             auto it = hfind(hash[b], key);
+ 
+             // print value
+@@ -60,6 +59,7 @@
+         } else if (sscanf(buf, "set %s %zu ", key, &sz) == 2) {
+             // find item; insert if missing
+             auto b = string_hash(key) % NBUCKETS;
++            std::scoped_lock lock(hash_mutex[b]);
+             auto it = hfind(hash[b], key);
+             if (it == hash[b].end()) {
+                 it = hash[b].insert(it, hash_item(key));
+@@ -74,6 +74,7 @@
+         } else if (sscanf(buf, "delete %s ", key) == 1) {
+             // find item
+             auto b = string_hash(key) % NBUCKETS;
++            std::scoped_lock lock(hash_mutex[b]);
+             auto it = hfind(hash[b], key);
+ 
+             // remove if found
+@@ -90,8 +91,6 @@
+             fprintf(f, "ERROR\r\n");
+             fflush(f);
+         }
+-
+-        hash_mutex.unlock();
+     }
+ 
+     if (ferror(fin)) {
+--- weensydb-04.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-05.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -41,24 +41,37 @@
+ 
+     while (fgets(buf, BUFSIZ, fin)) {
+         if (sscanf(buf, "get %s ", key) == 1) {
+-            // find item
++            // find item and fetch value
+             auto b = string_hash(key) % NBUCKETS;
+-            std::scoped_lock lock(hash_mutex[b]);
++            hash_mutex[b].lock();
+             auto it = hfind(hash[b], key);
+ 
+-            // print value
++            void* ptr = nullptr;
++            std::string value;
+             if (it != hash[b].end()) {
++                ptr = &*it;
++                value = it->value;
++            }
++            hash_mutex[b].unlock();
++
++            // print value
++            if (ptr) {
+                 fprintf(f, "VALUE %s %zu %p\r\n",
+-                        key, it->value.length(), &*it);
+-                fwrite(it->value.data(), 1, it->value.length(), f);
++                        key, value.length(), ptr);
++                fwrite(value.data(), 1, value.length(), f);
+                 fprintf(f, "\r\n");
+             }
+             fprintf(f, "END\r\n");
+             fflush(f);
+ 
+         } else if (sscanf(buf, "set %s %zu ", key, &sz) == 2) {
++            // read value
++            std::string value = std::string(sz, '\0');
++            fread(value.data(), 1, sz, fin);
++
+             // find item; insert if missing
+             auto b = string_hash(key) % NBUCKETS;
++            hash_mutex[b].lock();
+             std::scoped_lock lock(hash_mutex[b]);
+             auto it = hfind(hash[b], key);
+             if (it == hash[b].end()) {
+@@ -66,21 +79,30 @@
+             }
+ 
+             // set value
+-            it->value = std::string(sz, '\0');
+-            fread(it->value.data(), 1, sz, fin);
+-            fprintf(f, "STORED %p\r\n", &*it);
++            it->value = value;
++            void* ptr = &*it;
++            hash_mutex[b].unlock();
++
++            // print notice
++            fprintf(f, "STORED %p\r\n", ptr);
+             fflush(f);
+ 
+         } else if (sscanf(buf, "delete %s ", key) == 1) {
+             // find item
+             auto b = string_hash(key) % NBUCKETS;
+-            std::scoped_lock lock(hash_mutex[b]);
++            hash_mutex[b].lock();
+             auto it = hfind(hash[b], key);
+ 
+             // remove if found
++            void* ptr = nullptr;
+             if (it != hash[b].end()) {
+-                void* ptr = &*it;
++                ptr = &*it;
+                 hash[b].erase(it);
++            }
++            hash_mutex[b].unlock();
++
++            // print message
++            if (ptr) {
+                 fprintf(f, "DELETED %p\r\n", ptr);
+             } else {
+                 fprintf(f, "NOT_FOUND\r\n");
+--- weensydb-05.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-06.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -36,7 +36,7 @@
+     FILE* fin = fdopen(cfd, "r");
+     FILE* f = fdopen(cfd, "w");
+ 
+-    char buf[BUFSIZ], key[BUFSIZ];
++    char buf[BUFSIZ], key[BUFSIZ], key2[BUFSIZ];
+     size_t sz;
+ 
+     while (fgets(buf, BUFSIZ, fin)) {
+@@ -109,6 +109,27 @@
+             }
+             fflush(f);
+ 
++        } else if (sscanf(buf, "exch %s %s ", key, key2) == 2) {
++            // find item
++            auto b1 = string_hash(key) % NBUCKETS;
++            auto b2 = string_hash(key2) % NBUCKETS;
++            hash_mutex[b1].lock();
++            hash_mutex[b2].lock();
++            auto it1 = hfind(hash[b1], key);
++            auto it2 = hfind(hash[b2], key2);
++
++            // exchange items
++            if (it1 != hash[b1].end() && it2 != hash[b2].end()) {
++                std::swap(it1->value, it2->value);
++                fprintf(f, "EXCHANGED %p %p\r\n", &*it1, &*it2);
++            } else {
++                fprintf(f, "NOT_FOUND\r\n");
++            }
++            fflush(f);
++
++            hash_mutex[b1].unlock();
++            hash_mutex[b2].unlock();
++            
+         } else if (remove_trailing_whitespace(buf)) {
+             fprintf(f, "ERROR\r\n");
+             fflush(f);
+--- weensydb-06.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-07.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -114,7 +114,9 @@
+             auto b1 = string_hash(key) % NBUCKETS;
+             auto b2 = string_hash(key2) % NBUCKETS;
+             hash_mutex[b1].lock();
+-            hash_mutex[b2].lock();
++            if (b1 != b2) {
++                hash_mutex[b2].lock();
++            }
+             auto it1 = hfind(hash[b1], key);
+             auto it2 = hfind(hash[b2], key2);
+ 
+@@ -128,7 +130,9 @@
+             fflush(f);
+ 
+             hash_mutex[b1].unlock();
+-            hash_mutex[b2].unlock();
++            if (b1 != b2) {
++                hash_mutex[b2].unlock();
++            }
+             
+         } else if (remove_trailing_whitespace(buf)) {
+             fprintf(f, "ERROR\r\n");
+--- weensydb-07.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-08.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -113,8 +113,13 @@
+             // find item
+             auto b1 = string_hash(key) % NBUCKETS;
+             auto b2 = string_hash(key2) % NBUCKETS;
+-            hash_mutex[b1].lock();
+-            if (b1 != b2) {
++            if (b1 > b2) {
++                hash_mutex[b2].lock();
++                hash_mutex[b1].lock();
++            } else if (b1 == b2) {
++                hash_mutex[b1].lock();
++            } else {
++                hash_mutex[b1].lock();
+                 hash_mutex[b2].lock();
+             }
+             auto it1 = hfind(hash[b1], key);
+--- weensydb-08.cc	2019-12-03 11:47:05.000000000 -0500
++++ weensydb-09.cc	2019-12-03 11:47:05.000000000 -0500
+@@ -14,6 +14,10 @@
+ std::list<hash_item> hash[NBUCKETS];
+ std::mutex hash_mutex[NBUCKETS];
+ 
++std::mutex thread_mutex;
++std::condition_variable thread_cv;
++int nthreads;
++
+ 
+ // hash_get(key, create)
+ //    Looks up `key` in the hashtable, `hash`, and returns
+@@ -150,6 +154,11 @@
+     }
+     fclose(fin); // also closes `f`'s underlying fd
+     (void) fclose(f);
++
++    // mark thread as closed
++    std::unique_lock<std::mutex> guard(thread_mutex);
++    --nthreads;
++    thread_cv.notify_all();
+ }
+ 
+ 
+@@ -174,6 +183,13 @@
+             exit(1);
+         }
+ 
++        // At most 100 threads at a time
++        std::unique_lock<std::mutex> guard(thread_mutex);
++        while (nthreads == 100) {
++            thread_cv.wait(guard);
++        }
++        ++nthreads;
++
+         // Handle connection
+         std::thread t(handle_connection, cfd);
+         t.detach();

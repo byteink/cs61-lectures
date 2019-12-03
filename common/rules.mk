@@ -1,9 +1,17 @@
 # compiler flags
 CFLAGS := -std=gnu11 -W -Wall -Wshadow -g $(DEFS) $(CFLAGS)
 CXXFLAGS := -std=gnu++1z -W -Wall -Wshadow -g $(DEFS) $(CXXFLAGS)
+
 O ?= -O3
 ifeq ($(filter 0 1 2 3 s,$(O)),$(strip $(O)))
 override O := -O$(O)
+endif
+
+PTHREAD ?= 0
+ifeq ($(PTHREAD),1)
+CFLAGS += -pthread
+CXXFLAGS += -pthread
+WANT_TSAN ?= 1
 endif
 
 PIE ?= 1

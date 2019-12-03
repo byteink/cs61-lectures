@@ -7,9 +7,8 @@ all: $(PROGRAMS)
 ALLPROGRAMS = $(PROGRAMS)
 
 O = 2
+PTHREAD = 1
 include ../common/rules.mk
-LDFLAGS := $(filter-out -no-pie,$(LDFLAGS))
-LIBS := -lpthread
 
 %.o: %.cc $(BUILDSTAMP)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
